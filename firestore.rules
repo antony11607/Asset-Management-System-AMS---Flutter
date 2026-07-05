@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role == 'Admin';
+    }
+
+    function isOwnProfile(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      // Allow unauthenticated read for username lookup during login
+      // The query itself filters by username, so only matching documents are returned
+      allow read: if request.auth == null;
+
+      // Allow admins to read and manage all users.
+      allow read: if request.auth != null && isAdmin(request.auth.uid);
+
+      // Allow users to read only their own profile.
+      allow read: if isOwnProfile(userId);
+
+      // Allow anyone to create a user document during registration.
+      allow create: if true;
+
+      // Allow admins to update any user document.
+      allow update: if request.auth != null && (isAdmin(request.auth.uid) || isOwnProfile(userId));
+
+      // Prevent account deletion from the client app.
+      allow delete: if false;
+    }
+
+    match /assets/{assetId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && isAdmin(request.auth.uid);
+      allow update, delete: if request.auth != null && isAdmin(request.auth.uid);
+      
+      // Allow service providers to update asset status when completing maintenance
+      allow update: if request.auth != null && 
+        request.resource.data.status == 'In Use' || request.resource.data.status == 'Available';
+    }
+
+    match /assetRequests/{requestId} {
+      allow read: if request.auth != null && (
+        isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid
+      );
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && (
+        resource.data.userId == request.auth.uid || isAdmin(request.auth.uid)
+      );
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /allocations/{allocationId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && isAdmin(request.auth.uid);
+      allow update, delete: if request.auth != null && isAdmin(request.auth.uid);
+      
+      // Allow service providers to update allocation status when completing maintenance
+      allow update: if request.auth != null && 
+        request.resource.data.status == 'In Use';
+    }
+
+    match /returnRequests/{returnId} {
+      // Users can read their own return requests
+      allow read: if request.auth != null && (
+        isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid
+      );
+      
+      // Users can create return requests for their own allocations
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Only admins can update return requests (approve/reject)
+      allow update: if request.auth != null && isAdmin(request.auth.uid);
+      
+      // Only admins can delete return requests
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /maintenanceRequests/{maintId} {
+      // Users can read their own maintenance requests
+      allow read: if request.auth != null && (
+        isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid || resource.data.assignedTo == request.auth.uid
+      );
+      
+      // Users can create maintenance requests for their own assets
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Admins can update maintenance requests (approve/reject/assign)
+      allow update: if request.auth != null && isAdmin(request.auth.uid);
+      
+      // Service providers can update status of their assigned tasks
+      allow update: if request.auth != null && resource.data.assignedTo == request.auth.uid;
+      
+      // Only admins can delete maintenance requests
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

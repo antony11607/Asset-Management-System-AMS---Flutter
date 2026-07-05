@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "83595668969",
+    "project_id": "asset-ms-71f11",
+    "storage_bucket": "asset-ms-71f11.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:83595668969:android:5a90a8491563a62ef4af78",
+        "android_client_info": {
+          "package_name": "com.shatechx.ams"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "83595668969-nc2cvtjdp57erm4fhki92q3ht8bmhgd1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8OQNqMDUBdHxdJRBbENXM5u9qsPaq4TA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "83595668969-nc2cvtjdp57erm4fhki92q3ht8bmhgd1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
